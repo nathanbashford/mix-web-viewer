@@ -1,0 +1,5 @@
+        ORIG    1000
+START   OUT     MSG(19)
+        HLT
+MSG     ALF     "HELLO"
+        END     START

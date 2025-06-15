@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MIX Viewer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen p-6">
+  <div class="max-w-2xl mx-auto bg-white shadow-md rounded-xl p-6 space-y-6">
+    <h1 class="text-2xl font-bold text-center text-gray-800">MIX Assembly Viewer</h1>
+
+    <!-- Upload Form -->
+    <form id="uploadForm" enctype="multipart/form-data" class="space-y-4">
+      <input type="file" id="fileInput" name="file" accept=".mixal" class="block w-full border p-2 rounded" />
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        Upload MIXAL File
+      </button>
+    </form>
+
+    <!-- Action Buttons -->
+    <div class="flex justify-between">
+      <button id="historyButton" class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800">
+        Show History
+      </button>
+      <button id="clearHistoryButton" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+        Clear History
+      </button>
+    </div>
+
+    <!-- Output Box -->
+    <div>
+      <h2 class="text-lg font-semibold text-gray-700">Output</h2>
+      <pre id="outputBox" class="bg-black text-green-300 p-4 rounded overflow-auto max-h-64"></pre>
+    </div>
+
+    <!-- History -->
+    <div id="history" class="space-y-4"></div>
+  </div>
+
+  <!-- ✅ Scripts -->
+  <script>
+    const form = document.getElementById('uploadForm');
+    const fileInput = document.getElementById('fileInput');
+    const outputBox = document.getElementById('outputBox');
+    const historyButton = document.getElementById('historyButton');
+    const historyDiv = document.getElementById('history');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const file = fileInput.files[0];
+      if (!file) {
+        outputBox.textContent = "Please select a file.";
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const response = await fetch("http://localhost:5000/upload", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          outputBox.textContent = data.output;
+        } else {
+          outputBox.textContent = "Error: " + (data.error || "Unknown error");
+        }
+      } catch (err) {
+        outputBox.textContent = "Error connecting to backend.";
+      }
+    });
+
+    // ✅ History button click
+    historyButton.addEventListener('click', async () => {
+      try {
+        const res = await fetch("http://localhost:5000/history");
+        const data = await res.json();
+
+        historyDiv.innerHTML = "<h3>Upload History</h3>";
+        data.forEach(entry => {
+          const item = document.createElement('pre');
+          item.textContent = `[${entry.timestamp}] ${entry.filename}\nOutput:\n${entry.output || "No output"}\n${entry.error ? 'Error:\n' + entry.error : ''}`;
+          historyDiv.appendChild(item);
+        });
+      } catch (err) {
+        historyDiv.innerHTML = "Error loading history.";
+      }
+    });
+  </script>
+
+  <script src="main.js"></script>
+  
+</body>
+</html>
